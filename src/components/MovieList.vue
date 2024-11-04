@@ -1,16 +1,21 @@
 <template>
   <div>
-    <h2>Movie List</h2>
-    <div v-if="loading">Loading movies...</div>
-    <div v-if="error">{{ error }}</div>
-    <ul>
-      <li v-for="movie in movies" :key="movie.id">
-        <h3>{{ movie.title }}</h3>
-        <p>Release Date: {{ movie.release_date }}</p>
-        <BarcodeUser :value="movie.id.toString()" />
-        <!-- Display barcode for each movie -->
-      </li>
-    </ul>
+    <h2 class="text-2xl font-bold mb-4">Movie List</h2>
+    <div v-if="loading" class="text-gray-500">Loading movies...</div>
+    <div v-if="error" class="text-red-500">{{ error }}</div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+      <div
+        v-for="movie in movies"
+        :key="movie.id"
+        class="bg-white rounded-lg shadow-lg p-4"
+      >
+        <h3 class="text-xl font-semibold">{{ movie.title }}</h3>
+        <p class="text-sm text-gray-700">
+          Release Date: {{ movie.release_date }}
+        </p>
+        <BarcodeUser :value="movie.id.toString()" class="mt-4" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -23,6 +28,15 @@ export default {
   components: {
     BarcodeUser,
   },
+  mounted() {
+    console.log(process.env.API_KEY);
+  },
+  props: {
+    searchQuery: {
+      type: String,
+      required: true,
+    },
+  },
   data() {
     return {
       movies: [],
@@ -30,12 +44,25 @@ export default {
       error: null,
     };
   },
+  watch: {
+    searchQuery: {
+      immediate: true,
+      handler(newQuery) {
+        if (newQuery) {
+          this.fetchMovies(newQuery); // Fetch movies on search query change
+        }
+      },
+    },
+  },
   methods: {
-    async fetchMovies() {
-      const apiKey = process.env.VUE_APP_API_KEY; // Replacing with VUE_APP_ for Vue CLI variable
-      const bearerToken = process.env.VUE_APP_API_BEARER_TOKEN; // Ensure it starts with VUE_APP_ in .env
+    async fetchMovies(query) {
+      // Directly use the provided API key
+      const apiKey = "7bd3f902e99719c5aa57356eb3acb07e"; // The API key provided
 
-      const url = `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}`;
+      // Constructing the URL for the movie search, allowing dynamic query
+      const url = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(
+        query
+      )}&api_key=${apiKey}`;
 
       this.loading = true;
       this.error = null;
@@ -43,30 +70,19 @@ export default {
       try {
         const response = await axios.get(url, {
           headers: {
-            Authorization: `Bearer ${bearerToken}`, // Set the Bearer token here
+            accept: "application/json",
           },
         });
+
+        // Update movies with fetched data
         this.movies = response.data.results;
       } catch (err) {
         this.error = "Error fetching data, please try again.";
-        console.error(err);
+        console.error(err.response ? err.response.data : err.message); // Log the error for debugging
       } finally {
         this.loading = false;
       }
     },
   },
-  created() {
-    this.fetchMovies();
-  },
 };
 </script>
-
-<style scoped>
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  margin-bottom: 20px;
-}
-</style>
