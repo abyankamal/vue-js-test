@@ -13,6 +13,16 @@
         <p class="text-sm text-gray-700">
           Release Date: {{ movie.release_date }}
         </p>
+
+        <!-- Image Rendering -->
+        <img
+          :src="`https://image.tmdb.org/t/p/w500${movie.backdrop_path}`"
+          alt="Movie backdrop"
+          class="w-full h-auto rounded-lg mb-4"
+          v-if="movie.backdrop_path"
+        />
+        <!-- Show image if backdrop_path exists -->
+
         <BarcodeUser :value="movie.id.toString()" class="mt-4" />
       </div>
     </div>
@@ -27,9 +37,6 @@ export default {
   name: "MovieList",
   components: {
     BarcodeUser,
-  },
-  mounted() {
-    console.log(process.env.API_KEY);
   },
   props: {
     searchQuery: {
@@ -56,10 +63,10 @@ export default {
   },
   methods: {
     async fetchMovies(query) {
-      // Directly use the provided API key
-      const apiKey = "7bd3f902e99719c5aa57356eb3acb07e"; // The API key provided
+      const apiKey = process.env.VUE_APP_API_KEY; // Load API key from environment variable
+      const bearerToken = process.env.VUE_APP_BEARER_TOKEN; // Load Bearer token from environment variable
 
-      // Constructing the URL for the movie search, allowing dynamic query
+      // Constructing the URL for the movie search
       const url = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(
         query
       )}&api_key=${apiKey}`;
@@ -71,6 +78,7 @@ export default {
         const response = await axios.get(url, {
           headers: {
             accept: "application/json",
+            Authorization: `Bearer ${bearerToken}`, // Include the Bearer token in headers
           },
         });
 
@@ -78,7 +86,7 @@ export default {
         this.movies = response.data.results;
       } catch (err) {
         this.error = "Error fetching data, please try again.";
-        console.error(err.response ? err.response.data : err.message); // Log the error for debugging
+        console.error(err.response ? err.response.data : err.message); // Log detailed error information
       } finally {
         this.loading = false;
       }
