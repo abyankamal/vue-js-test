@@ -7,6 +7,8 @@
       <li v-for="movie in movies" :key="movie.id">
         <h3>{{ movie.title }}</h3>
         <p>Release Date: {{ movie.release_date }}</p>
+        <BarcodeUser :value="movie.id.toString()" />
+        <!-- Display barcode for each movie -->
       </li>
     </ul>
   </div>
@@ -14,7 +16,7 @@
 
 <script>
 import axios from "axios";
-import BarcodeUser from "./Barcode.vue";
+import BarcodeUser from "./BarcodeUser.vue";
 
 export default {
   name: "MovieList",
@@ -30,8 +32,9 @@ export default {
   },
   methods: {
     async fetchMovies() {
-      const apiKey = "YOUR_API_KEY"; // Replace with your TMDb API key
-      const bearerToken = "YOUR_BEARER_TOKEN"; // This is your Bearer token
+      const apiKey = process.env.VUE_APP_API_KEY; // Replacing with VUE_APP_ for Vue CLI variable
+      const bearerToken = process.env.VUE_APP_API_BEARER_TOKEN; // Ensure it starts with VUE_APP_ in .env
+
       const url = `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}`;
 
       this.loading = true;
